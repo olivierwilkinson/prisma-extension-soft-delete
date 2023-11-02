@@ -1,0 +1,29 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "./node_modules/kcd-scripts/eslint.js",
+    "plugin:import/typescript"
+  ],
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "babel/new-cap": "off",
+    "func-names": "off",
+    "babel/no-unused-expressions": "off",
+    "prefer-arrow-callback": "off",
+    "testing-library/no-await-sync-query": "off",
+    "testing-library/no-dom-import": "off",
+    "testing-library/prefer-screen-queries": "off",
+    "no-undef": "off",
+    "no-use-before-define": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
+    ],
+    "max-lines-per-function": "off",
+    "consistent-return": "off",
+    "jest/no-if": "off",
+    "one-var": "off",
+    "babel/camelcase": "off"
+  }
+}

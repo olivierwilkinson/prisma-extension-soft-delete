@@ -1,0 +1,77 @@
+{
+  "name": "prisma-extension-soft-delete",
+  "version": "1.0.0-semantically-released",
+  "description": "Prisma extension for soft deleting records",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/esm/index.js",
+  "scripts": {
+    "build": "npm-run-all build:cjs build:esm",
+    "build:cjs": "tsc -p tsconfig.build.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "test:unit": "prisma generate && jest --config jest.config.unit.js",
+    "test:e2e": "./test/scripts/run-with-postgres.sh jest --config jest.config.e2e.js --runInBand",
+    "test": "./test/scripts/run-with-postgres.sh jest --runInBand",
+    "lint": "eslint ./src  --fix --ext .ts",
+    "typecheck": "npm run build:cjs -- --noEmit && npm run build:esm -- --noEmit",
+    "validate": "kcd-scripts validate lint,typecheck,test",
+    "semantic-release": "semantic-release",
+    "doctoc": "doctoc ."
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "prisma",
+    "client",
+    "middleware"
+  ],
+  "author": "Olivier Wilkinson",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "prisma-extension-nested-operations": "^1.0.1"
+  },
+  "peerDependencies": {
+    "@prisma/client": "*"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.4.2",
+    "@types/faker": "^5.5.9",
+    "@types/jest": "^29.2.5",
+    "@types/lodash": "^4.14.192",
+    "@typescript-eslint/eslint-plugin": "^4.14.0",
+    "@typescript-eslint/parser": "^4.14.0",
+    "doctoc": "^2.2.0",
+    "eslint": "^7.6.0",
+    "faker": "^5.0.0",
+    "jest": "^29.3.1",
+    "kcd-scripts": "^5.0.0",
+    "lodash": "^4.17.21",
+    "npm-run-all": "^4.1.5",
+    "prisma": "^5.4.2",
+    "semantic-release": "^17.0.2",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olivierwilkinson/prisma-extension-soft-delete.git"
+  },
+  "release": {
+    "branches": [
+      "main",
+      {
+        "name": "prerelease",
+        "prerelease": true
+      },
+      {
+        "name": "next",
+        "prerelease": true
+      }
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

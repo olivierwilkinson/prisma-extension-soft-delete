@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: "postgres:latest"
+    hostname: postgres
+    user: postgres
+    restart: always
+    environment:
+      - POSTGRES_DATABASE=test
+      - POSTGRES_PASSWORD=123
+    ports:
+      - '5432:5432'

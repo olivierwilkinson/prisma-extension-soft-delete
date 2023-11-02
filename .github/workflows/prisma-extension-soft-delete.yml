@@ -1,0 +1,40 @@
+name: prisma-extensions-soft-delete
+on:
+  push:
+    branches:
+      - 'main'
+      - 'next'
+  pull_request:
+
+jobs:
+  test:
+    name: 'node ${{ matrix.node }} chrome ${{ matrix.os }} '
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [16]
+    steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run validate
+        env:
+          CI: true
+  release:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build
+      - run: ls -asl dist
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
