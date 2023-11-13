@@ -58,7 +58,7 @@ This module is distributed via [npm][npm] and should be installed as one of your
 project's dependencies:
 
 ```
-npm install prisma-extensions-soft-delete
+npm install prisma-extension-soft-delete
 ```
 
 `@prisma/client` is a peer dependency of this library, so you will need to
