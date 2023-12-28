@@ -981,11 +981,11 @@ Apache 2.0
 [node]: https://nodejs.org
 [build-badge]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/workflows/prisma-soft-delete-middleware/badge.svg
 [build]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/actions?query=branch%3Amaster+workflow%3Aprisma-extension-soft-delete
-[version-badge]: https://img.shields.io/npm/v/prisma-soft-delete-middleware.svg?style=flat-square
-[package]: https://www.npmjs.com/package/prisma-soft-delete-middleware
-[downloads-badge]: https://img.shields.io/npm/dm/prisma-soft-delete-middleware.svg?style=flat-square
-[npmtrends]: http://www.npmtrends.com/prisma-soft-delete-middleware
-[license-badge]: https://img.shields.io/npm/l/prisma-soft-delete-middleware.svg?style=flat-square
+[version-badge]: https://img.shields.io/npm/v/prisma-extension-soft-delete.svg?style=flat-square
+[package]: https://www.npmjs.com/package/prisma-extension-soft-delete
+[downloads-badge]: https://img.shields.io/npm/dm/prisma-extension-soft-delete.svg?style=flat-square
+[npmtrends]: http://www.npmtrends.com/prisma-extension-soft-delete
+[license-badge]: https://img.shields.io/npm/l/prisma-extension-soft-delete.svg?style=flat-square
 [license]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
