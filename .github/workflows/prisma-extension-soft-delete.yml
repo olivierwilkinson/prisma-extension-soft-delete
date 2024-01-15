@@ -1,4 +1,4 @@
-name: prisma-extensions-soft-delete
+name: prisma-extension-soft-delete
 on:
   push:
     branches:

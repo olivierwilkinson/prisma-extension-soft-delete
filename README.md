@@ -979,8 +979,8 @@ Apache 2.0
 
 [npm]: https://www.npmjs.com/
 [node]: https://nodejs.org
-[build-badge]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/workflows/prisma-soft-delete-middleware/badge.svg
-[build]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/actions?query=branch%3Amaster+workflow%3Aprisma-extension-soft-delete
+[build-badge]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/workflows/prisma-extension-soft-delete/badge.svg
+[build]: https://github.com/olivierwilkinson/prisma-extension-soft-delete/actions?query=branch%main+workflow%3Aprisma-extension-soft-delete
 [version-badge]: https://img.shields.io/npm/v/prisma-extension-soft-delete.svg?style=flat-square
 [package]: https://www.npmjs.com/package/prisma-extension-soft-delete
 [downloads-badge]: https://img.shields.io/npm/dm/prisma-extension-soft-delete.svg?style=flat-square
