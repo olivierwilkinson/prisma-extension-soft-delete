@@ -1,3 +1,7 @@
 export * from "./lib/types";
 
-export { createSoftDeleteExtension } from "./lib/createSoftDeleteExtension";
+export {
+  getModelsMethods,
+  createSoftDeleteExtension,
+  softDeleteExtensionOperations,
+} from "./lib/createSoftDeleteExtension";
