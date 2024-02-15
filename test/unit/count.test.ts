@@ -1,62 +1,64 @@
-import { set } from "lodash";
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("count", () => {
   it("does not change count action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({ models: {} }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({ models: {} })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "count", {});
-
-    await $allOperations(params);
+    await extendedClient.user.count({});
 
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.count).toHaveBeenCalledWith({});
   });
 
   it("excludes deleted records from count", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { User: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { User: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "count", undefined);
-
-    await $allOperations(params);
+    await extendedClient.user.count(undefined);
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith(set(params, "args.where.deleted", false).args);
+    expect(client.user.count).toHaveBeenCalledWith({ where: { deleted: false } });
   });
 
   it("excludes deleted records from count with empty args", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { User: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { User: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "count", {});
-
-    await $allOperations(params);
+    await extendedClient.user.count({});
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith(set(params, "args.where.deleted", false).args);
+    expect(client.user.count).toHaveBeenCalledWith({
+      where: { deleted: false },
+    });
   });
 
   it("excludes deleted record from count with where", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { User: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { User: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "count", {
+    await extendedClient.user.count({
       where: { email: { contains: "test" } },
     });
 
-    await $allOperations(params);
-
     // params have been modified
-    expect(query).toHaveBeenCalledWith(set(params, "args.where.deleted", false).args);
+    expect(client.user.count).toHaveBeenCalledWith({
+      where: { email: { contains: "test" }, deleted: false },
+    });
   });
 });

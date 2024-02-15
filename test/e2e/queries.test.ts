@@ -365,12 +365,12 @@ describe("queries", () => {
     it("throws a useful error when invalid where is passed", async () => {
       // throws useful error when no where is passed
       await expect(() => testClient.user.findUnique()).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
 
       // throws useful error when empty where is passed
       await expect(() => testClient.user.findUnique({})).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
 
       // throws useful error when where is passed undefined unique fields
@@ -379,7 +379,7 @@ describe("queries", () => {
           where: { id: undefined },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
 
       // throws useful error when where has defined non-unique fields
@@ -388,7 +388,7 @@ describe("queries", () => {
           where: { name: firstUser.name },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
 
       // throws useful error when where has undefined compound unique index field
@@ -397,7 +397,7 @@ describe("queries", () => {
           where: { name_email: undefined },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
 
       // throws useful error when where has undefined unique field and defined non-unique field
@@ -406,7 +406,7 @@ describe("queries", () => {
           where: { id: undefined, name: firstUser.name },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUnique()` invocation"
+        "Invalid `prisma.user.findUnique()` invocation"
       );
     });
 
@@ -447,14 +447,14 @@ describe("queries", () => {
       await expect(() =>
         testClient.user.findUniqueOrThrow()
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
 
       // throws useful error when empty where is passed
       await expect(() =>
         testClient.user.findUniqueOrThrow({})
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
 
       // throws useful error when where is passed undefined unique fields
@@ -463,7 +463,7 @@ describe("queries", () => {
           where: { id: undefined },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
 
       // throws useful error when where has defined non-unique fields
@@ -472,7 +472,7 @@ describe("queries", () => {
           where: { name: firstUser.name },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
 
       // throws useful error when where has undefined compound unique index field
@@ -481,7 +481,7 @@ describe("queries", () => {
           where: { name_email: undefined },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
 
       // throws useful error when where has undefined unique field and defined non-unique field
@@ -490,7 +490,7 @@ describe("queries", () => {
           where: { id: undefined, name: firstUser.name },
         })
       ).rejects.toThrowError(
-        "Invalid `testClient.user.findUniqueOrThrow()` invocation"
+        "Invalid `prisma.user.findUniqueOrThrow()` invocation"
       );
     });
 

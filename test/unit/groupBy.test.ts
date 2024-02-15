@@ -1,57 +1,63 @@
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("groupBy", () => {
   //group by must always have by and order by, else we get an error,
   it("does not change groupBy action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "groupBy", {
+    await extendedClient.user.groupBy({
       where: { id: 1 },
       by: ["id"],
       orderBy: {},
     });
-    await $allOperations(params);
+
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.groupBy).toHaveBeenCalledWith({
+      where: { id: 1 },
+      by: ["id"],
+      orderBy: {},
+    });
   });
 
   it("does not modify groupBy results", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
-    const query = jest.fn(() => Promise.resolve([{ id: 1, deleted: true }]));
-    const params = createParams(query, "User", "groupBy", {
+
+    client.user.groupBy.mockImplementation(
+      () => Promise.resolve([{ id: 1, deleted: true }]) as any
+    );
+
+    const result = await extendedClient.user.groupBy({
       where: { id: 1 },
       by: ["id"],
       orderBy: {},
     });
-    const result = await $allOperations(params);
+
     expect(result).toEqual([{ id: 1, deleted: true }]);
   });
 
   it("excludes deleted records from groupBy", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "groupBy", {
+    await extendedClient.user.groupBy({
       where: { id: 1 },
       by: ["id"],
       orderBy: {},
     });
 
-    await $allOperations(params);
-
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.groupBy).toHaveBeenCalledWith({
       by: ["id"],
       orderBy: {},
       where: {
@@ -62,22 +68,27 @@ describe("groupBy", () => {
   });
 
   it("allows explicitly querying for deleted records using groupBy", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "groupBy", {
+    await extendedClient.user.groupBy({
       where: { id: 1, deleted: true },
       by: ["id"],
       orderBy: {},
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.groupBy).toHaveBeenCalledWith({
+      by: ["id"],
+      orderBy: {},
+      where: {
+        id: 1,
+        deleted: true,
+      },
+    });
   });
 });

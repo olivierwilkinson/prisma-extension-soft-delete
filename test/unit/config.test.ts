@@ -1,20 +1,20 @@
 import faker from "faker";
-import { set } from "lodash";
 
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("config", () => {
   it('does not soft delete models where config is passed as "false"', async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: {
-        User: false,
-      },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: {
+          User: false,
+        },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "Post", "update", {
+    await extendedClient.post.update({
       where: { id: 1 },
       data: {
         author: { delete: true },
@@ -27,26 +27,37 @@ describe("config", () => {
       },
     });
 
-    await $allOperations(params);
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.post.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        author: { delete: true },
+        comments: {
+          updateMany: {
+            where: { content: expect.any(String) },
+            data: { content: expect.any(String) },
+          },
+        },
+      },
+    });
   });
 
   it("allows setting default config values", async () => {
     const deletedAt = new Date();
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: {
-        Post: true,
-        Comment: true,
-      },
-      defaultConfig: {
-        field: "deletedAt",
-        createValue: () => deletedAt,
-      },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: {
+          Post: true,
+          Comment: true,
+        },
+        defaultConfig: {
+          field: "deletedAt",
+          createValue: () => deletedAt,
+        },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: {
@@ -61,14 +72,23 @@ describe("config", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.data.posts", {
-      update: { where: { id: 1 }, data: { deletedAt } },
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        posts: {
+          update: { where: { id: 1 }, data: { deletedAt } },
+        },
+        comments: {
+          updateMany: {
+            where: {
+              content: expect.any(String),
+              deletedAt,
+            },
+            data: { content: expect.any(String) },
+          },
+        },
+      },
     });
-    set(params, "args.data.comments.updateMany.where.deletedAt", deletedAt);
-
-    expect(query).toHaveBeenCalledWith(params.args);
   });
 
   it('throws when default config does not have a "field" property', () => {
@@ -105,18 +125,20 @@ describe("config", () => {
 
   it("allows setting model specific config values", async () => {
     const deletedAt = new Date();
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: {
-        Post: {
-          field: "deletedAt",
-          createValue: () => deletedAt,
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: {
+          Post: {
+            field: "deletedAt",
+            createValue: () => deletedAt,
+          },
+          Comment: true,
         },
-        Comment: true,
-      },
-    }));
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: { delete: { id: 1 } },
@@ -129,37 +151,45 @@ describe("config", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.data.posts", {
-      update: { where: { id: 1 }, data: { deletedAt } },
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        posts: {
+          update: { where: { id: 1 }, data: { deletedAt: expect.any(Date) } },
+        },
+        comments: {
+          updateMany: {
+            where: { deleted: false, content: expect.any(String) },
+            data: { content: expect.any(String) },
+          },
+        },
+      },
     });
-    set(params, "args.data.comments.updateMany.where.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
   });
 
   it("allows overriding default config values", async () => {
     const deletedAt = new Date();
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: {
-        Post: true,
-        Comment: {
-          field: "deleted",
-          createValue: Boolean,
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: {
+          Post: true,
+          Comment: {
+            field: "deleted",
+            createValue: Boolean,
+          },
         },
-      },
-      defaultConfig: {
-        field: "deletedAt",
-        createValue: (deleted) => {
-          if (deleted) return deletedAt;
-          return null;
+        defaultConfig: {
+          field: "deletedAt",
+          createValue: (deleted) => {
+            if (deleted) return deletedAt;
+            return null;
+          },
         },
-      },
-    }));
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: { delete: { id: 1 } },
@@ -172,13 +202,19 @@ describe("config", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.data.posts", {
-      update: { where: { id: 1 }, data: { deletedAt } },
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        posts: {
+          update: { where: { id: 1 }, data: { deletedAt } },
+        },
+        comments: {
+          updateMany: {
+            where: { deleted: false, content: expect.any(String) },
+            data: { content: expect.any(String) },
+          },
+        },
+      },
     });
-    set(params, "args.data.comments.updateMany.where.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
   });
 });

@@ -1,29 +1,28 @@
-import { set } from "lodash";
-
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("aggregate", () => {
   it("does not change aggregate action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "aggregate", {
+    await extendedClient.user.aggregate({
       where: { email: { contains: "test" } },
       _sum: { id: true },
     });
 
-    await $allOperations(params);
-
-    // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    // args have not been modified
+    expect(client.user.aggregate).toHaveBeenCalledWith({
+      where: { email: { contains: "test" } },
+      _sum: { id: true },
+    });
   });
 
   it("excludes deleted records from aggregate with no where", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           User: true,
@@ -31,19 +30,15 @@ describe("aggregate", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "aggregate", {});
+    await extendedClient.user.aggregate({});
 
-    await $allOperations(params);
-
-    // params have been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.where.deleted", false).args
-    );
+    // args have been modified
+    expect(client.user.aggregate).toHaveBeenCalledWith({ where: { deleted: false } });
   });
 
   it("excludes deleted record from aggregate with where", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           User: true,
@@ -51,16 +46,13 @@ describe("aggregate", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "aggregate", {
+    await extendedClient.user.aggregate({
       where: { email: { contains: "test" } },
     });
 
-    await $allOperations(params);
-
-    // params have been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.where.deleted", false).args
-    );
+    // args have been modified
+    expect(client.user.aggregate).toHaveBeenCalledWith({
+      where: { email: { contains: "test" }, deleted: false },
+    });
   });
 });

@@ -1,55 +1,53 @@
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("findMany", () => {
   it("does not change findMany params if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       where: { id: 1 },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 
   it("does not modify findMany results", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve([{ id: 1, deleted: true }]));
-    const params = createParams(query, "User", "findMany", {
+    client.user.findMany.mockImplementation((() =>
+      Promise.resolve([{ id: 1, deleted: true }])) as any);
+
+    const result = await extendedClient.user.findMany({
       where: { id: 1 },
     });
-
-    const result = await $allOperations(params);
 
     expect(result).toEqual([{ id: 1, deleted: true }]);
   });
 
   it("excludes deleted records from findMany", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       where: { id: 1 },
     });
 
-    await $allOperations(params);
-
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findMany).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
@@ -58,19 +56,17 @@ describe("findMany", () => {
   });
 
   it("excludes deleted records from findMany with no args", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", undefined);
-
-    await $allOperations(params);
+    await extendedClient.user.findMany(undefined);
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findMany).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -78,19 +74,17 @@ describe("findMany", () => {
   });
 
   it("excludes deleted records from findMany with empty args", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {});
-
-    await $allOperations(params);
+    await extendedClient.user.findMany({});
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findMany).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -98,20 +92,23 @@ describe("findMany", () => {
   });
 
   it("allows explicitly querying for deleted records using findMany", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       where: { id: 1, deleted: true },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      where: {
+        id: 1,
+        deleted: true,
+      },
+    });
   });
 });

@@ -1,55 +1,53 @@
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("findFirstOrThrow", () => {
   it("does not change findFirstOrThrow params if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findFirstOrThrow", {
+    await extendedClient.user.findFirstOrThrow({
       where: { id: 1 },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 
   it("does not modify findFirstOrThrow results", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({ id: 1, deleted: true }));
-    const params = createParams(query, "User", "findFirstOrThrow", {
+    client.user.findFirstOrThrow.mockImplementation((() =>
+      Promise.resolve({ id: 1, deleted: true })) as any);
+
+    const result = await extendedClient.user.findFirstOrThrow({
       where: { id: 1 },
     });
-
-    const result = await $allOperations(params);
 
     expect(result).toEqual({ id: 1, deleted: true });
   });
 
   it("excludes deleted records from findFirstOrThrow", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findFirstOrThrow", {
+    await extendedClient.user.findFirstOrThrow({
       where: { id: 1 },
     });
 
-    await $allOperations(params);
-
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
@@ -58,17 +56,15 @@ describe("findFirstOrThrow", () => {
   });
 
   it("excludes deleted records from findFirstOrThrow with no args", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findFirstOrThrow", undefined);
-
-    await $allOperations(params);
+    await extendedClient.user.findFirstOrThrow(undefined);
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -76,17 +72,15 @@ describe("findFirstOrThrow", () => {
   });
 
   it("excludes deleted records from findFirstOrThrow with empty args", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findFirstOrThrow", {});
-
-    await $allOperations(params);
+    await extendedClient.user.findFirstOrThrow({});
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith({
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -94,20 +88,20 @@ describe("findFirstOrThrow", () => {
   });
 
   it("allows explicitly querying for deleted records using findFirstOrThrow", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findFirstOrThrow", {
+    await extendedClient.user.findFirstOrThrow({
       where: { id: 1, deleted: true },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+      where: { id: 1, deleted: true },
+    });
   });
 });
