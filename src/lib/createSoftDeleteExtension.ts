@@ -22,6 +22,8 @@ import {
   createWhereParams,
   createGroupByParams,
   CreateParams,
+  Params,
+  CreateParamsReturn,
 } from "./helpers/createParams";
 
 import { Config, ModelConfig } from "./types";
@@ -31,7 +33,7 @@ type ConfigBound<F> = F extends (x: ModelConfig, ...args: infer P) => infer R
   ? (...args: P) => R
   : never;
 
-export function createSoftDeleteExtension({
+export function getModelsMethods({
   models,
   defaultConfig = {
     field: "deleted",
@@ -40,17 +42,6 @@ export function createSoftDeleteExtension({
     allowCompoundUniqueIndexWhere: false,
   },
 }: Config) {
-  if (!defaultConfig.field) {
-    throw new Error(
-      "prisma-extension-soft-delete: defaultConfig.field is required"
-    );
-  }
-  if (!defaultConfig.createValue) {
-    throw new Error(
-      "prisma-extension-soft-delete: defaultConfig.createValue is required"
-    );
-  }
-
   const modelConfig: Partial<Record<Prisma.ModelName, ModelConfig>> = {};
 
   Object.keys(models).forEach((model) => {
@@ -102,6 +93,106 @@ export function createSoftDeleteExtension({
     };
   }, {});
 
+  return {
+    createParamsByModel,
+    modifyResultByModel,
+  };
+}
+
+export function softDeleteExtensionOperations({
+  createParamsByModel,
+  modifyResultByModel,
+}: {
+  createParamsByModel: Record<
+    string,
+    Record<string, ((params: Params) => CreateParamsReturn) | undefined>
+  >;
+  modifyResultByModel: Record<
+    string,
+    Record<
+      string,
+      ((result: any, params: Params, ctx?: any) => any) | undefined
+    >
+  >;
+}) {
+  return withNestedOperations({
+    async $rootOperation(initialParams) {
+      const createParams =
+        createParamsByModel[initialParams.model || ""]?.[
+          initialParams.operation
+        ];
+
+      if (!createParams) return initialParams.query(initialParams.args);
+
+      const { params, ctx } = createParams(initialParams);
+      const { model } = params;
+
+      const operationChanged = params.operation !== initialParams.operation;
+
+      const result = operationChanged
+        ? // @ts-expect-error - we don't know what the client is
+          await client[model[0].toLowerCase() + model.slice(1)][
+            params.operation
+          ](params.args)
+        : await params.query(params.args);
+
+      const modifyResult =
+        modifyResultByModel[params.model || ""]?.[params.operation];
+
+      if (!modifyResult) return result;
+
+      return modifyResult(result, params, ctx);
+    },
+    async $allNestedOperations(initialParams) {
+      const createParams =
+        createParamsByModel[initialParams.model || ""]?.[
+          initialParams.operation
+        ];
+
+      if (!createParams) return initialParams.query(initialParams.args);
+
+      const { params, ctx } = createParams(initialParams);
+
+      const result = await params.query(
+        params.args,
+        params.operation as NestedOperation
+      );
+
+      const modifyResult =
+        modifyResultByModel[params.model || ""]?.[params.operation];
+
+      if (!modifyResult) return result;
+
+      return modifyResult(result, params, ctx);
+    },
+  });
+}
+
+export function createSoftDeleteExtension({
+  models,
+  defaultConfig = {
+    field: "deleted",
+    createValue: Boolean,
+    allowToOneUpdates: false,
+    allowCompoundUniqueIndexWhere: false,
+  },
+}: Config) {
+  if (!defaultConfig.field) {
+    throw new Error(
+      "prisma-extension-soft-delete: defaultConfig.field is required"
+    );
+  }
+  if (!defaultConfig.createValue) {
+    throw new Error(
+      "prisma-extension-soft-delete: defaultConfig.createValue is required"
+    );
+  }
+
+  const { createParamsByModel, modifyResultByModel } = getModelsMethods({
+    models,
+    defaultConfig,
+  });
+
   // before handling root params generate deleted value so it is consistent
   // for the query. Add it to root params and get it from scope?
 
@@ -109,59 +200,12 @@ export function createSoftDeleteExtension({
     return client.$extends({
       query: {
         $allModels: {
-          // @ts-expect-error - we don't know what the client is
-          $allOperations: withNestedOperations({
-            async $rootOperation(initialParams) {
-              const createParams =
-                createParamsByModel[initialParams.model || ""]?.[
-                  initialParams.operation
-                ];
-
-              if (!createParams) return initialParams.query(initialParams.args);
-
-              const { params, ctx } = createParams(initialParams);
-              const { model } = params;
-
-              const operationChanged =
-                params.operation !== initialParams.operation;
-
-              const result = operationChanged
-                ? // @ts-expect-error - we don't know what the client is
-                  await client[model[0].toLowerCase() + model.slice(1)][
-                    params.operation
-                  ](params.args)
-                : await params.query(params.args);
-
-              const modifyResult =
-                modifyResultByModel[params.model || ""]?.[params.operation];
-
-              if (!modifyResult) return result;
-
-              return modifyResult(result, params, ctx);
-            },
-            async $allNestedOperations(initialParams) {
-              const createParams =
-                createParamsByModel[initialParams.model || ""]?.[
-                  initialParams.operation
-                ];
-
-              if (!createParams) return initialParams.query(initialParams.args);
-
-              const { params, ctx } = createParams(initialParams);
-
-              const result = await params.query(
-                params.args,
-                params.operation as NestedOperation
-              );
-
-              const modifyResult =
-                modifyResultByModel[params.model || ""]?.[params.operation];
-
-              if (!modifyResult) return result;
-
-              return modifyResult(result, params, ctx);
-            },
-          }),
+          $allOperations: (params) =>
+            softDeleteExtensionOperations({
+              createParamsByModel,
+              modifyResultByModel,
+              // @ts-expect-error - we don't know what the client is
+            })(params),
         },
       },
     });
