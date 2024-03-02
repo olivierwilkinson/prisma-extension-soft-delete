@@ -154,10 +154,7 @@ export const createUpsertParams: CreateParams = (_, params) => {
   return { params };
 };
 
-function validateFindUniqueParams(
-  params: Params,
-  config: ModelConfig
-): void {
+function validateFindUniqueParams(params: Params, config: ModelConfig): void {
   const uniqueIndexFields = uniqueIndexFieldsByModel[params.model || ""] || [];
   const uniqueIndexField = Object.keys(params.args?.where || {}).find((key) =>
     uniqueIndexFields.includes(key)

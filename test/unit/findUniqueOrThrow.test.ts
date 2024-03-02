@@ -1,144 +1,136 @@
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("findUniqueOrThrow", () => {
   it("does not change findUniqueOrThrow params if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({
       where: { id: 1 },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 
   it("does not modify findUniqueOrThrow results", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
     const queryResult = { id: 1, deleted: true };
-    const query = jest.fn(() => Promise.resolve(queryResult));
-    mockClient.user.findFirstOrThrow.mockImplementation(() => queryResult);
+    client.user.findFirstOrThrow.mockImplementation(
+      () => Promise.resolve(queryResult) as any
+    );
 
-    const params = createParams(query, "User", "findUniqueOrThrow", {
+    const result = await extendedClient.user.findUniqueOrThrow({
       where: { id: 1 },
     });
-
-    const result = await $allOperations(params);
 
     expect(result).toEqual({ id: 1, deleted: true });
   });
 
   it("changes findUniqueOrThrow into findFirstOrThrow and excludes deleted records", async () => {
-    const client = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({
       where: { id: 1 },
     });
 
-    await client.$allOperations(params);
-
     // params have been modified
-    expect(mockClient.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
       },
     });
-    
-    // query has not been called
-    expect(query).not.toHaveBeenCalled();
+    expect(client.user.findUniqueOrThrow).not.toHaveBeenCalled();
   });
 
   it("does not modify findUniqueOrThrow to be a findFirstOrThrow when no args passed", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
     // @ts-expect-error testing if user doesn't pass args accidentally
-    const params = createParams(query, "User", "findUniqueOrThrow", undefined);
-
-    await $allOperations(params);
+    await extendedClient.user.findUniqueOrThrow(undefined);
 
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith(undefined);
   });
 
   it("does not modify findUniqueOrThrow to be a findFirst when invalid where passed", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    let query = jest.fn(() => Promise.resolve({}));
     // @ts-expect-error testing if user doesn't pass where accidentally
-    let params = createParams(query, "User", "findUniqueOrThrow", {});
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    await extendedClient.user.findUniqueOrThrow({});
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({});
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect empty where not to modify params
-    query = jest.fn(() => Promise.resolve({}));
     // @ts-expect-error testing if user passes where without unique field
-    params = createParams(query, "User", "findUniqueOrThrow", { where: {} });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    await extendedClient.user.findUniqueOrThrow({ where: {} });
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({ where: {} });
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect where with undefined id field not to modify params
-    query = jest.fn(() => Promise.resolve({}));
-    params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({ where: { id: undefined } });
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
       where: { id: undefined },
     });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect where with undefined unique field not to modify params
-    query = jest.fn(() => Promise.resolve({}));
-    params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({
       where: { email: undefined },
     });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { email: undefined },
+    });
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect where with undefined unique index field not to modify params
-    query = jest.fn(() => Promise.resolve({}));
-    params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({
       where: { name_email: undefined },
     });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { name_email: undefined },
+    });
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect where with defined non-unique field
-    query = jest.fn(() => Promise.resolve({}));
-    params = createParams(query, "User", "findUniqueOrThrow", {
-      // @ts-expect-error intentionally incorrect where
+    // @ts-expect-error intentionally incorrect where
+    await extendedClient.user.findUniqueOrThrow({ where: { name: "test" } });
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
       where: { name: "test" },
     });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    client.user.findUniqueOrThrow.mockClear();
 
     // expect where with defined non-unique field and undefined id field not to modify params
-    query = jest.fn(() => Promise.resolve({}));
-    params = createParams(query, "User", "findUniqueOrThrow", {
+    await extendedClient.user.findUniqueOrThrow({
       where: { id: undefined, name: "test" },
     });
-    await $allOperations(params);
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { id: undefined, name: "test" },
+    });
   });
 });

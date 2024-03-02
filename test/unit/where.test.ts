@@ -1,18 +1,16 @@
 import faker from "faker";
-import { set } from "lodash";
 
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("where", () => {
   it("does not change where action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "deleteMany", {
+    await extendedClient.user.deleteMany({
       where: {
         email: faker.internet.email(),
         comments: {
@@ -23,21 +21,26 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.deleteMany).toHaveBeenCalledWith({
+      where: {
+        email: expect.any(String),
+        comments: {
+          some: {
+            content: expect.any(String),
+          },
+        },
+      },
+    });
   });
 
   it("changes root where correctly when model is nested", async () => {
-    const { $allOperations } = mockClient.$extends(
-      createSoftDeleteExtension({
-        models: { Comment: true },
-      })
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({ models: { Comment: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "deleteMany", {
+    await extendedClient.user.deleteMany({
       where: {
         email: faker.internet.email(),
         comments: {
@@ -62,23 +65,42 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.where.comments.some.deleted", false);
-
-    // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.deleteMany).toHaveBeenCalledWith({
+      where: {
+        email: expect.any(String),
+        comments: {
+          some: {
+            deleted: false,
+            AND: [
+              { createdAt: { gt: expect.any(Date) } },
+              { createdAt: { lt: expect.any(Date) } },
+            ],
+            OR: [
+              { post: { content: expect.any(String) } },
+              { post: { content: expect.any(String) } },
+            ],
+            NOT: { post: { is: { authorName: expect.any(String) } } },
+            content: expect.any(String),
+            post: {
+              isNot: {
+                content: expect.any(String),
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("handles where with modifiers correctly", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { Post: true, Comment: true, User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "Comment", "findMany", {
+    await extendedClient.comment.findMany({
       where: {
         content: faker.lorem.sentence(),
         post: {
@@ -105,29 +127,46 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.where.deleted", false);
-    set(params, "args.where.post.is.deleted", false);
-    set(params, "args.where.author.isNot.deleted", false);
-    set(params, "args.where.replies.some.deleted", false);
-    set(params, "args.where.replies.every", {
-      OR: [{ deleted: { not: false } }, params.args.where.replies.every],
+    expect(client.comment.findMany).toHaveBeenCalledWith({
+      where: {
+        deleted: false,
+        content: expect.any(String),
+        post: {
+          is: {
+            content: expect.any(String),
+            deleted: false,
+          },
+        },
+        author: {
+          isNot: {
+            name: expect.any(String),
+            deleted: false,
+          },
+        },
+        replies: {
+          some: {
+            content: expect.any(String),
+            deleted: false,
+          },
+          every: {
+            OR: [{ deleted: { not: false } }, { content: expect.any(String) }],
+          },
+          none: {
+            content: expect.any(String),
+            deleted: false,
+          },
+        },
+      },
     });
-    set(params, "args.where.replies.none.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
   });
 
   it("changes root where correctly when model is deeply nested", async () => {
-    const { $allOperations } = mockClient.$extends(
-      createSoftDeleteExtension({
-        models: { Post: true },
-      })
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({ models: { Post: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "deleteMany", {
+    await extendedClient.user.deleteMany({
       where: {
         email: faker.internet.email(),
         comments: {
@@ -157,19 +196,53 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.where.comments.some.AND.1.post.deleted", false);
-    set(params, "args.where.comments.some.OR.0.post.deleted", false);
-    set(params, "args.where.comments.some.NOT.post.is.deleted", false);
-    set(params, "args.where.comments.some.post.isNot.deleted", false);
-
-    // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    // params have been modified
+    expect(client.user.deleteMany).toHaveBeenCalledWith({
+      where: {
+        email: expect.any(String),
+        comments: {
+          some: {
+            AND: [
+              { createdAt: { gt: expect.any(Date) } },
+              {
+                post: {
+                  deleted: false,
+                  content: expect.any(String),
+                },
+              },
+            ],
+            OR: [
+              {
+                post: {
+                  content: expect.any(String),
+                  deleted: false,
+                },
+              },
+              { createdAt: { lt: expect.any(Date) } },
+            ],
+            NOT: {
+              post: {
+                is: {
+                  deleted: false,
+                  authorName: expect.any(String),
+                },
+              },
+            },
+            post: {
+              isNot: {
+                content: expect.any(String),
+                deleted: false,
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("change root where correctly when multiple models passed", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -178,8 +251,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "deleteMany", {
+    await extendedClient.user.deleteMany({
       where: {
         email: faker.internet.email(),
         comments: {
@@ -204,22 +276,40 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.where.comments.some.deleted", false);
-    set(params, "args.where.comments.some.NOT.post.is.deleted", false);
-    set(params, "args.where.comments.some.OR.0.post.deleted", false);
-    set(params, "args.where.comments.some.OR.1.post.deleted", false);
-    set(params, "args.where.comments.some.post.isNot.deleted", false);
-
-    // params have not been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.where.comments.some.deleted", false).args
-    );
+    // params have been modified
+    expect(client.user.deleteMany).toHaveBeenCalledWith({
+      where: {
+        email: expect.any(String),
+        comments: {
+          some: {
+            deleted: false,
+            AND: [
+              { createdAt: { gt: expect.any(Date) } },
+              { createdAt: { lt: expect.any(Date) } },
+            ],
+            OR: [
+              { post: { deleted: false, content: expect.any(String) } },
+              { post: { deleted: false, content: expect.any(String) } },
+            ],
+            NOT: {
+              post: { is: { deleted: false, authorName: expect.any(String) } },
+            },
+            content: expect.any(String),
+            post: {
+              isNot: {
+                deleted: false,
+                content: expect.any(String),
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("allows checking for deleted records explicitly", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -228,8 +318,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "deleteMany", {
+    await extendedClient.user.deleteMany({
       where: {
         email: faker.internet.email(),
         comments: {
@@ -273,22 +362,53 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.where.comments.some.deleted", true);
-    set(params, "args.where.comments.some.OR.0.post.deleted", true);
-    set(params, "args.where.comments.some.OR.1.post.deleted", false);
-    set(params, "args.where.comments.some.NOT.post.is.deleted", true);
-    set(params, "args.where.comments.some.post.isNot.deleted", false);
-    set(params, "args.where.comments.some.replies.some.deleted", true);
-    set(params, "args.where.comments.some.replies.every.deleted", true);
-    set(params, "args.where.comments.some.replies.none.deleted", true);
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.deleteMany).toHaveBeenCalledWith({
+      where: {
+        email: expect.any(String),
+        comments: {
+          some: {
+            deleted: true,
+            AND: [
+              { createdAt: { gt: expect.any(Date) } },
+              { createdAt: { lt: expect.any(Date) } },
+            ],
+            OR: [
+              { post: { deleted: true, content: expect.any(String) } },
+              { post: { deleted: false, content: expect.any(String) } },
+            ],
+            NOT: {
+              post: { is: { deleted: true, authorName: expect.any(String) } },
+            },
+            content: expect.any(String),
+            post: {
+              isNot: {
+                deleted: false,
+                content: expect.any(String),
+              },
+            },
+            replies: {
+              some: {
+                content: expect.any(String),
+                deleted: true,
+              },
+              every: {
+                content: expect.any(String),
+                deleted: true,
+              },
+              none: {
+                content: expect.any(String),
+                deleted: true,
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("excludes deleted from include where with nested relations", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -296,8 +416,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       include: {
         posts: {
           where: {
@@ -311,15 +430,25 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.include.posts.where.comments.some.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      include: {
+        posts: {
+          where: {
+            comments: {
+              some: {
+                deleted: false,
+                content: expect.any(String),
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("excludes deleted from select where with nested relations", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -327,8 +456,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       select: {
         posts: {
           where: {
@@ -342,15 +470,25 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.select.posts.where.comments.some.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      select: {
+        posts: {
+          where: {
+            comments: {
+              some: {
+                deleted: false,
+                content: expect.any(String),
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("excludes deleted from include where with nested relations and multiple models", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -359,8 +497,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       include: {
         comments: {
           where: {
@@ -377,21 +514,30 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.include.comments.where.deleted", false);
-    set(params, "args.include.comments.where.post.deleted", false);
-    set(
-      params,
-      "args.include.comments.where.post.comments.some.deleted",
-      false
-    );
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      include: {
+        comments: {
+          where: {
+            deleted: false,
+            post: {
+              deleted: false,
+              content: expect.any(String),
+              comments: {
+                some: {
+                  deleted: false,
+                  content: expect.any(String),
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   });
 
   it("excludes deleted from select where with nested relations and multiple models", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: {
           Comment: true,
@@ -400,8 +546,7 @@ describe("where", () => {
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "findMany", {
+    await extendedClient.user.findMany({
       select: {
         comments: {
           where: {
@@ -418,12 +563,24 @@ describe("where", () => {
       },
     });
 
-    await $allOperations(params);
-
-    set(params, "args.select.comments.where.deleted", false);
-    set(params, "args.select.comments.where.post.deleted", false);
-    set(params, "args.select.comments.where.post.comments.some.deleted", false);
-
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.findMany).toHaveBeenCalledWith({
+      select: {
+        comments: {
+          where: {
+            deleted: false,
+            post: {
+              deleted: false,
+              content: expect.any(String),
+              comments: {
+                some: {
+                  deleted: false,
+                  content: expect.any(String),
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   });
 });

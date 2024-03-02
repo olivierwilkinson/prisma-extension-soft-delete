@@ -1,34 +1,38 @@
-import { set } from "lodash";
 import faker from "faker";
 
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("select", () => {
   it("does not change select params if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({ models: {} }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({ models: {} })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: { comments: true },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { email: "test@test.com" },
+      select: { comments: true },
+    });
   });
 
   it("excludes deleted records from selects", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { Comment: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { Comment: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {
@@ -36,80 +40,95 @@ describe("select", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params have been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.select.comments", {
-        where: {
-          deleted: false,
-        },
-      }).args
-    );
-  });
-
-  it("excludes deleted records from selects using where", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { Comment: true },
-    }));
-
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    expect(client.user.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {
         comments: {
           where: {
-            content: faker.lorem.sentence(),
+            deleted: false,
           },
         },
       },
     });
+  });
 
-    await $allOperations(params);
+  it("excludes deleted records from selects using where", async () => {
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { Comment: true },
+      })
+    );
+
+    const content = faker.lorem.sentence();
+
+    await extendedClient.user.update({
+      where: { id: 1 },
+      data: { email: "test@test.com" },
+      select: {
+        comments: {
+          where: { content },
+        },
+      },
+    });
 
     // params have been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.select.comments.where.deleted", false).args
-    );
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { email: "test@test.com" },
+      select: {
+        comments: {
+          where: {
+            content,
+            deleted: false,
+          },
+        },
+      },
+    });
   });
 
   it("excludes deleted records from include with select", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { Comment: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { Comment: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: {
         comments: {
-          select: {
-            id: true,
-          },
+          select: { id: true },
         },
       },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.include.comments", {
-        where: { deleted: false },
-        select: { id: true },
-      }).args
-    );
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { email: "test@test.com" },
+      include: {
+        comments: {
+          select: { id: true },
+          where: { deleted: false },
+        },
+      },
+    });
   });
 
   it("allows explicitly selecting deleted records using select", async () => {
-    const { $allOperations } = mockClient.$extends(createSoftDeleteExtension({
-      models: { Comment: true },
-    }));
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { Comment: true },
+      })
+    );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {
@@ -121,9 +140,17 @@ describe("select", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { email: "test@test.com" },
+      select: {
+        comments: {
+          where: {
+            deleted: true,
+          },
+        },
+      },
+    });
   });
 });

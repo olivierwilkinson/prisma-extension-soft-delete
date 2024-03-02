@@ -1,30 +1,26 @@
-import { set } from "lodash";
 import { createSoftDeleteExtension } from "../../src";
-import { createParams } from "./utils/createParams";
-import mockClient from "./utils/mockClient";
+import { MockClient } from "./utils/mockClient";
 
 describe("delete", () => {
   it("does not change delete action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "delete", { where: { id: 1 } });
-
-    await $allOperations(params);
+    await extendedClient.user.delete({ where: { id: 1 } });
 
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.delete).toHaveBeenCalledWith({ where: { id: 1 } });
   });
 
   it("does not change nested delete action if model is not in the list", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: {} })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: {
@@ -33,134 +29,134 @@ describe("delete", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        posts: {
+          delete: { id: 1 },
+        },
+      },
+    });
   });
 
   it("does not modify delete results", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
-    
+
     const queryResult = { id: 1, deleted: true };
-    const query = jest.fn(() => Promise.resolve(queryResult));
-    mockClient.user.update.mockImplementation(() => queryResult);
+    client.user.update.mockImplementation((() =>
+      Promise.resolve(queryResult)) as any);
 
-    const params = createParams(query, "User", "delete", { where: { id: 1 } });
-
-    const result = await $allOperations(params);
+    const result = await extendedClient.user.delete({ where: { id: 1 } });
     expect(result).toEqual({ id: 1, deleted: true });
   });
 
   it("does not modify delete with no args", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
+    client.user.delete.mockImplementation((() => Promise.resolve({})) as any);
     // @ts-expect-error - args are required
-    const params = createParams(query, "User", "delete", undefined);
-
-    await $allOperations(params);
+    await extendedClient.user.delete(undefined);
 
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.delete).toHaveBeenCalledWith(undefined);
+    expect(client.user.update).not.toHaveBeenCalled();
   });
 
   it("does not modify delete with no where", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
     // @ts-expect-error - where is required
-    const params = createParams(query, "User", "delete", {});
-
-    await $allOperations(params);
+    await extendedClient.user.delete({});
 
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.delete).toHaveBeenCalledWith({});
+    expect(client.user.update).not.toHaveBeenCalled();
   });
 
   it("changes delete action into an update to add deleted mark", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { User: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve());
-    const params = createParams(query, "User", "delete", { where: { id: 1 } });
-    await $allOperations(params);
+    await extendedClient.user.delete({ where: { id: 1 } });
 
     // params are modified correctly
-    expect(mockClient.user.update).toHaveBeenCalledWith({
-      ...params.args,
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
       data: { deleted: true },
     });
-    
-    expect(query).not.toHaveBeenCalled();
   });
 
   it("does not change nested delete false action", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { Profile: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         profile: { delete: false },
       },
     });
 
-    await $allOperations(params);
-
     // params have not been modified
-    expect(query).toHaveBeenCalledWith(params.args);
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        profile: { delete: false },
+      },
+    });
   });
 
   it("changes nested delete true action into an update that adds deleted mark", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { Profile: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
-        profile: {
-          delete: true,
-        },
+        profile: { delete: true },
       },
     });
 
-    await $allOperations(params);
-
     // params are modified correctly
-    expect(query).toHaveBeenCalledWith(
-      set(params, "args.data.profile", {
-        update: { deleted: true },
-      }).args
-    );
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        profile: { update: { deleted: true } },
+      },
+    });
   });
 
   it("changes nested delete action on a toMany relation into an update that adds deleted mark", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { Post: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: {
@@ -169,11 +165,9 @@ describe("delete", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params are modified correctly
-    expect(query).toHaveBeenCalledWith({
-      ...params.args,
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
       data: {
         posts: {
           update: {
@@ -186,14 +180,14 @@ describe("delete", () => {
   });
 
   it("changes nested list of delete actions into a nested list of update actions", async () => {
-    const { $allOperations } = mockClient.$extends(
+    const client = new MockClient();
+    const extendedClient = client.$extends(
       createSoftDeleteExtension({
         models: { Post: true },
       })
     );
 
-    const query = jest.fn(() => Promise.resolve({}));
-    const params = createParams(query, "User", "update", {
+    await extendedClient.user.update({
       where: { id: 1 },
       data: {
         posts: {
@@ -202,11 +196,9 @@ describe("delete", () => {
       },
     });
 
-    await $allOperations(params);
-
     // params are modified correctly
-    expect(query).toHaveBeenCalledWith({
-      ...params.args,
+    expect(client.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
       data: {
         posts: {
           update: [
