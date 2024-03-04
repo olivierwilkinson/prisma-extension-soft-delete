@@ -7,7 +7,7 @@
   Soft deleting records is a common pattern in many applications. This library provides an extension for Prisma that
   allows you to soft delete records and exclude them from queries. It handles deleting records through relations and
   excluding soft deleted records when including relations or referencing them in where objects. It does this by using
-  the <a href="https://github.com/olivierwilkinson/prisma-nested-middleware">prisma-extension-nested-operations</a>
+  the <a href="https://github.com/olivierwilkinson/prisma-extension-nested-operations">prisma-extension-nested-operations</a>
   library to handle nested relations.
 </p>
 
