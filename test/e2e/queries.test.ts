@@ -396,6 +396,55 @@ describe("queries", () => {
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
     });
 
+    it.failing("does not break sequential transaction", async() => {
+      // eslint-disable-next-line prefer-const
+      let localClient: PrismaClient = testClient;
+
+      // uncomment to make this test succeed
+      // localClient = new PrismaClient();
+
+      const [[userRead1, _, userRead2]] = await Promise.all([
+        localClient.$transaction(
+          [
+
+            // read within transaction (userRead1)
+            localClient.user.findUniqueOrThrow({
+              where: { id: firstUser.id },
+            }),
+            
+            // sleep for 2 seconds to allow concurrent modification
+            localClient.$executeRaw`SELECT pg_sleep(1)`,
+
+            
+            // read again within transaction (userRead2)
+            localClient.user.findUniqueOrThrow({
+              where: { id: firstUser.id },
+            })
+          ],
+          {
+            isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+          }
+        ),
+        localClient.$transaction([
+
+          // sleep for 1 second to allow first read to happen in other transaction
+          localClient.$executeRaw`SELECT pg_sleep(1)`,
+
+          // modify
+          localClient.user.update({
+            where: { id: firstUser.id },
+            data: {
+              name: 'Jill',
+            },
+          })
+        ]),
+      ]);
+
+      // read is repeatable
+      expect(userRead1.name).toBe('Jack');
+      expect(userRead2.name).toBe('Jack');
+    });
+    
     it("throws a useful error when invalid where is passed", async () => {
       // throws useful error when no where is passed
       await expect(() => testClient.user.findUnique()).rejects.toThrowError(
