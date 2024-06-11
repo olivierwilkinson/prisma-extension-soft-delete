@@ -1,4 +1,4 @@
-import { Comment, PrismaClient, Profile, User } from "@prisma/client";
+import { Comment, PrismaClient, Profile, User, Prisma } from "@prisma/client";
 import faker from "faker";
 
 import { createSoftDeleteExtension } from "../../src";
@@ -360,6 +360,40 @@ describe("queries", () => {
         where: { id: deletedUser.id },
       });
       expect(notFoundUser).toBeNull();
+    });
+
+    it.failing("does not break interactive transaction", async() => {
+      // eslint-disable-next-line prefer-const
+      let localClient = testClient;
+
+      // uncomment to make this test succeed
+      // localClient = new PrismaClient();
+
+      await localClient.$transaction(async (transactionClient: any) => {
+
+        // read within transaction
+        const userRead1 = await transactionClient.user.findUnique({
+          where: { id: firstUser.id },
+        });
+        expect(userRead1.name).toBe('Jack');
+
+        // modify outside of transaction
+        await localClient.user.update({
+          where: { id: firstUser.id },
+          data: {
+            name: 'Jill',
+          },
+        });
+
+        // read again within transaction
+        const userRead2 = await transactionClient.user.findUnique({
+          where: { id: firstUser.id },
+        });
+
+        // read is repeatable
+        expect(userRead2.name).toBe('Jack');
+  
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
     });
 
     it("throws a useful error when invalid where is passed", async () => {
