@@ -58,6 +58,28 @@ describe("findUnique", () => {
     expect(extendedClient.user.findUnique.query).not.toHaveBeenCalled();
   });
 
+  it("allows explicitly querying for deleted records using findUnique", async () => {
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { User: true },
+      })
+    );
+
+    await extendedClient.user.findUnique({
+      where: { id: 1, deleted: true },
+    });
+
+    // params have not been modified
+    expect(client.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 1,
+        deleted: true,
+      },
+    });
+    expect(client.user.findUnique).not.toHaveBeenCalled();
+  });
+
   it("throws when trying to pass a findUnique where with a compound unique index field", async () => {
     const client = new MockClient();
     const extendedClient = client.$extends(

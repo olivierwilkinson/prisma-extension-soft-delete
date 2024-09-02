@@ -58,6 +58,28 @@ describe("findUniqueOrThrow", () => {
     expect(extendedClient.user.findUniqueOrThrow.query).not.toHaveBeenCalled();
   });
 
+  it("allows explicitly querying for deleted records using findUniqueOrThrow", async () => {
+    const client = new MockClient();
+    const extendedClient = client.$extends(
+      createSoftDeleteExtension({
+        models: { User: true },
+      })
+    );
+
+    await extendedClient.user.findUniqueOrThrow({
+      where: { id: 1, deleted: true },
+    });
+
+    // params have not been modified
+    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+      where: {
+        id: 1,
+        deleted: true,
+      },
+    });
+    expect(client.user.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+
   it("does not modify findUniqueOrThrow to be a findFirstOrThrow when no args passed", async () => {
     const client = new MockClient();
     const extendedClient = client.$extends(
