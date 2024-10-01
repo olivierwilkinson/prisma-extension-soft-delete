@@ -27,7 +27,7 @@ describe("config", () => {
       },
     });
 
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         author: { delete: true },
@@ -72,7 +72,7 @@ describe("config", () => {
       },
     });
 
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {
@@ -151,7 +151,7 @@ describe("config", () => {
       },
     });
 
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {
@@ -202,7 +202,7 @@ describe("config", () => {
       },
     });
 
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {

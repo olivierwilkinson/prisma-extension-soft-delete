@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { Prisma as PrismaExtensions } from "@prisma/client/extension";
 import {
   NestedOperation,
   withNestedOperations,
@@ -30,22 +31,6 @@ type ConfigBound<F> = F extends (x: ModelConfig, ...args: infer P) => infer R
   ? (...args: P) => R
   : never;
 
-const rootOperations = [
-  "delete",
-  "deleteMany",
-  "update",
-  "updateMany",
-  "upsert",
-  "findFirst",
-  "findFirstOrThrow",
-  "findUnique",
-  "findUniqueOrThrow",
-  "findMany",
-  "count",
-  "aggregate",
-  "groupBy",
-] as const;
-
 export function createSoftDeleteExtension({
   models,
   defaultConfig = {
@@ -66,10 +51,10 @@ export function createSoftDeleteExtension({
     );
   }
 
-  const modelNames = Object.keys(models) as Prisma.ModelName[];
-
   const modelConfig: Partial<Record<Prisma.ModelName, ModelConfig>> = {};
-  modelNames.forEach((modelName) => {
+
+  Object.keys(models).forEach((model) => {
+    const modelName = model as Prisma.ModelName;
     const config = models[modelName];
     if (config) {
       modelConfig[modelName] =
@@ -117,86 +102,68 @@ export function createSoftDeleteExtension({
     };
   }, {});
 
-  return Prisma.defineExtension((client) =>
-    client.$extends({
-      name: "prisma-extension-soft-delete",
-      model: Prisma.dmmf.datamodel.models
-        .map((modelDef) => modelDef.name)
-        .reduce(function (modelsAcc, configModelName) {
-          const modelName =
-            configModelName[0].toLowerCase() + configModelName.slice(1);
+  // before handling root params generate deleted value so it is consistent
+  // for the query. Add it to root params and get it from scope?
 
-          return {
-            ...modelsAcc,
-            [modelName]: rootOperations.reduce(function (
-              opsAcc,
-              rootOperation
-            ) {
-              return {
-                ...opsAcc,
-                [rootOperation]: function (args: any) {
-                  const $allOperations = withNestedOperations({
-                    async $rootOperation(initialParams) {
-                      const createParams =
-                        createParamsByModel[initialParams.model]?.[
-                          initialParams.operation
-                        ];
+  return PrismaExtensions.defineExtension((client) => {
+    return client.$extends({
+      query: {
+        $allModels: {
+          // @ts-expect-error - we don't know what the client is
+          $allOperations: withNestedOperations({
+            async $rootOperation(initialParams) {
+              const createParams =
+                createParamsByModel[initialParams.model || ""]?.[
+                  initialParams.operation
+                ];
 
-                      if (!createParams)
-                        return initialParams.query(initialParams.args);
+              if (!createParams) return initialParams.query(initialParams.args);
 
-                      const { params, ctx } = createParams(initialParams);
+              const { params, ctx } = createParams(initialParams);
+              const { model } = params;
 
-                      // @ts-expect-error - we don't know what the client is
-                      const result = await client[modelName][params.operation](
-                        params.args
-                      );
+              const operationChanged =
+                params.operation !== initialParams.operation;
 
-                      const modifyResult =
-                        modifyResultByModel[params.model]?.[params.operation];
+              const result = operationChanged
+                ? // @ts-expect-error - we don't know what the client is
+                  await client[model[0].toLowerCase() + model.slice(1)][
+                    params.operation
+                  ](params.args)
+                : await params.query(params.args);
 
-                      if (!modifyResult) return result;
+              const modifyResult =
+                modifyResultByModel[params.model || ""]?.[params.operation];
 
-                      return modifyResult(result, params, ctx);
-                    },
-                    async $allNestedOperations(initialParams) {
-                      const createParams =
-                        createParamsByModel[initialParams.model]?.[
-                          initialParams.operation
-                        ];
+              if (!modifyResult) return result;
 
-                      if (!createParams)
-                        return initialParams.query(initialParams.args);
-
-                      const { params, ctx } = createParams(initialParams);
-
-                      const result = await params.query(
-                        params.args,
-                        params.operation as NestedOperation
-                      );
-
-                      const modifyResult =
-                        modifyResultByModel[params.model]?.[params.operation];
-
-                      if (!modifyResult) return result;
-
-                      return modifyResult(result, params, ctx);
-                    },
-                  });
-
-                  return $allOperations({
-                    model: configModelName as any,
-                    operation: rootOperation,
-                    // @ts-expect-error - we don't know what the client is
-                    query: client[modelName][rootOperation],
-                    args,
-                  });
-                },
-              };
+              return modifyResult(result, params, ctx);
             },
-            {}),
-          };
-        }, {}),
-    })
-  );
+            async $allNestedOperations(initialParams) {
+              const createParams =
+                createParamsByModel[initialParams.model || ""]?.[
+                  initialParams.operation
+                ];
+
+              if (!createParams) return initialParams.query(initialParams.args);
+
+              const { params, ctx } = createParams(initialParams);
+
+              const result = await params.query(
+                params.args,
+                params.operation as NestedOperation
+              );
+
+              const modifyResult =
+                modifyResultByModel[params.model || ""]?.[params.operation];
+
+              if (!modifyResult) return result;
+
+              return modifyResult(result, params, ctx);
+            },
+          }),
+        },
+      },
+    });
+  });
 }

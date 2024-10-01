@@ -14,7 +14,7 @@ describe("updateMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith({
       where: { id: { in: [1, 2] } },
       data: { email: "test@test.com" },
     });
@@ -26,7 +26,7 @@ describe("updateMany", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.updateMany.mockImplementation(
+    extendedClient.user.updateMany.query.mockImplementation(
       () => Promise.resolve({ count: 1 }) as any
     );
 
@@ -48,7 +48,7 @@ describe("updateMany", () => {
     await extendedClient.user.updateMany(undefined);
 
     // params have not been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith(undefined);
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith(undefined);
   });
 
   it("excludes deleted records from root updateMany action", async () => {
@@ -65,7 +65,7 @@ describe("updateMany", () => {
     });
 
     // params have been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith({
       data: { email: "test@test.com" },
       where: {
         id: 1,
@@ -87,7 +87,7 @@ describe("updateMany", () => {
     });
 
     // params have been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith({
       data: { name: "John" },
       where: {
         deleted: false,
@@ -124,7 +124,7 @@ describe("updateMany", () => {
     });
 
     // params have been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         comments: {
@@ -162,7 +162,7 @@ describe("updateMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith({
       where: { id: { in: [1, 2] }, deleted: true },
       data: { email: "test@test.com" },
     });
@@ -190,7 +190,7 @@ describe("updateMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.updateMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.updateMany.query).toHaveBeenCalledWith({
       where: { id: { in: [1, 2] }, deletedAt: { not: null } },
       data: { email: "test@test.com" },
     });

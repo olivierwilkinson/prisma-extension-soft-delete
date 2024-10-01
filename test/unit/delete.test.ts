@@ -11,7 +11,7 @@ describe("delete", () => {
     await extendedClient.user.delete({ where: { id: 1 } });
 
     // params have not been modified
-    expect(client.user.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(extendedClient.user.delete.query).toHaveBeenCalledWith({ where: { id: 1 } });
   });
 
   it("does not change nested delete action if model is not in the list", async () => {
@@ -30,7 +30,7 @@ describe("delete", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {
@@ -65,7 +65,7 @@ describe("delete", () => {
     await extendedClient.user.delete(undefined);
 
     // params have not been modified
-    expect(client.user.delete).toHaveBeenCalledWith(undefined);
+    expect(extendedClient.user.delete.query).toHaveBeenCalledWith(undefined);
     expect(client.user.update).not.toHaveBeenCalled();
   });
 
@@ -79,7 +79,7 @@ describe("delete", () => {
     await extendedClient.user.delete({});
 
     // params have not been modified
-    expect(client.user.delete).toHaveBeenCalledWith({});
+    expect(extendedClient.user.delete.query).toHaveBeenCalledWith({});
     expect(client.user.update).not.toHaveBeenCalled();
   });
 
@@ -116,7 +116,7 @@ describe("delete", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         profile: { delete: false },
@@ -140,7 +140,7 @@ describe("delete", () => {
     });
 
     // params are modified correctly
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         profile: { update: { deleted: true } },
@@ -166,7 +166,7 @@ describe("delete", () => {
     });
 
     // params are modified correctly
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {
@@ -197,7 +197,7 @@ describe("delete", () => {
     });
 
     // params are modified correctly
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {

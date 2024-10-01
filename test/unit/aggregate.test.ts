@@ -14,7 +14,7 @@ describe("aggregate", () => {
     });
 
     // args have not been modified
-    expect(client.user.aggregate).toHaveBeenCalledWith({
+    expect(extendedClient.user.aggregate.query).toHaveBeenCalledWith({
       where: { email: { contains: "test" } },
       _sum: { id: true },
     });
@@ -33,7 +33,7 @@ describe("aggregate", () => {
     await extendedClient.user.aggregate({});
 
     // args have been modified
-    expect(client.user.aggregate).toHaveBeenCalledWith({ where: { deleted: false } });
+    expect(extendedClient.user.aggregate.query).toHaveBeenCalledWith({ where: { deleted: false } });
   });
 
   it("excludes deleted record from aggregate with where", async () => {
@@ -51,7 +51,7 @@ describe("aggregate", () => {
     });
 
     // args have been modified
-    expect(client.user.aggregate).toHaveBeenCalledWith({
+    expect(extendedClient.user.aggregate.query).toHaveBeenCalledWith({
       where: { email: { contains: "test" }, deleted: false },
     });
   });

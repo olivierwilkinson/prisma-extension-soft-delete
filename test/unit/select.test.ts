@@ -17,7 +17,7 @@ describe("select", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: { comments: true },
@@ -41,7 +41,7 @@ describe("select", () => {
     });
 
     // params have been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {
@@ -75,7 +75,7 @@ describe("select", () => {
     });
 
     // params have been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {
@@ -108,7 +108,7 @@ describe("select", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: {
@@ -141,7 +141,7 @@ describe("select", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       select: {

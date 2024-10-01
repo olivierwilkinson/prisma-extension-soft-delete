@@ -13,7 +13,7 @@ describe("findMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -24,7 +24,7 @@ describe("findMany", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.findMany.mockImplementation((() =>
+    extendedClient.user.findMany.query.mockImplementation((() =>
       Promise.resolve([{ id: 1, deleted: true }])) as any);
 
     const result = await extendedClient.user.findMany({
@@ -47,7 +47,7 @@ describe("findMany", () => {
     });
 
     // params have been modified
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
@@ -66,7 +66,7 @@ describe("findMany", () => {
     await extendedClient.user.findMany(undefined);
 
     // params have been modified
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -84,7 +84,7 @@ describe("findMany", () => {
     await extendedClient.user.findMany({});
 
     // params have been modified
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -104,7 +104,7 @@ describe("findMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: true,

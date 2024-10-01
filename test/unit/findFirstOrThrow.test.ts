@@ -13,7 +13,7 @@ describe("findFirstOrThrow", () => {
     });
 
     // params have not been modified
-    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirstOrThrow.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -24,7 +24,7 @@ describe("findFirstOrThrow", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.findFirstOrThrow.mockImplementation((() =>
+    extendedClient.user.findFirstOrThrow.query.mockImplementation((() =>
       Promise.resolve({ id: 1, deleted: true })) as any);
 
     const result = await extendedClient.user.findFirstOrThrow({
@@ -47,7 +47,7 @@ describe("findFirstOrThrow", () => {
     });
 
     // params have been modified
-    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirstOrThrow.query).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
@@ -64,7 +64,7 @@ describe("findFirstOrThrow", () => {
     await extendedClient.user.findFirstOrThrow(undefined);
 
     // params have been modified
-    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirstOrThrow.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -80,7 +80,7 @@ describe("findFirstOrThrow", () => {
     await extendedClient.user.findFirstOrThrow({});
 
     // params have been modified
-    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirstOrThrow.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -100,7 +100,7 @@ describe("findFirstOrThrow", () => {
     });
 
     // params have not been modified
-    expect(client.user.findFirstOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirstOrThrow.query).toHaveBeenCalledWith({
       where: { id: 1, deleted: true },
     });
   });
