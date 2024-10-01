@@ -33,26 +33,57 @@ type Operation = typeof operations[number];
 type Model = typeof models[number];
 
 type MockOperations<M extends Prisma.ModelName> = {
-  findUnique: jest.MockedFn<DelegateByModel<M>["findUnique"]>;
-  findUniqueOrThrow: jest.MockedFn<DelegateByModel<M>["findUnique"]>;
-  findFirst: jest.MockedFn<DelegateByModel<M>["findFirst"]>;
-  findFirstOrThrow: jest.MockedFn<DelegateByModel<M>["findFirst"]>;
-  findMany: jest.MockedFn<DelegateByModel<M>["findMany"]>;
-  aggregate: jest.MockedFn<DelegateByModel<M>["aggregate"]>;
-  create: jest.MockedFn<DelegateByModel<M>["create"]>;
-  createMany: jest.MockedFn<DelegateByModel<M>["createMany"]>;
-  delete: jest.MockedFn<DelegateByModel<M>["delete"]>;
-  deleteMany: jest.MockedFn<DelegateByModel<M>["deleteMany"]>;
-  update: jest.MockedFn<DelegateByModel<M>["update"]>;
-  updateMany: jest.MockedFn<DelegateByModel<M>["updateMany"]>;
-  upsert: jest.MockedFn<DelegateByModel<M>["upsert"]>;
-  groupBy: jest.MockedFn<DelegateByModel<M>["groupBy"]>;
-  count: jest.MockedFn<DelegateByModel<M>["count"]>;
+  findUnique: jest.MockedFn<DelegateByModel<M>["findUnique"]> & {
+    query: jest.Mock;
+  };
+  findUniqueOrThrow: jest.MockedFn<DelegateByModel<M>["findUnique"]> & {
+    query: jest.Mock;
+  };
+  findFirst: jest.MockedFn<DelegateByModel<M>["findFirst"]> & {
+    query: jest.Mock;
+  };
+  findFirstOrThrow: jest.MockedFn<DelegateByModel<M>["findFirst"]> & {
+    query: jest.Mock;
+  };
+  findMany: jest.MockedFn<DelegateByModel<M>["findMany"]> & {
+    query: jest.Mock;
+  };
+  aggregate: jest.MockedFn<DelegateByModel<M>["aggregate"]> & {
+    query: jest.Mock;
+  };
+  create: jest.MockedFn<DelegateByModel<M>["create"]> & {
+    query: jest.Mock;
+  };
+  createMany: jest.MockedFn<DelegateByModel<M>["createMany"]> & {
+    query: jest.Mock;
+  };
+  delete: jest.MockedFn<DelegateByModel<M>["delete"]> & {
+    query: jest.Mock;
+  };
+  deleteMany: jest.MockedFn<DelegateByModel<M>["deleteMany"]> & {
+    query: jest.Mock;
+  };
+  update: jest.MockedFn<DelegateByModel<M>["update"]> & {
+    query: jest.Mock;
+  };
+  updateMany: jest.MockedFn<DelegateByModel<M>["updateMany"]> & {
+    query: jest.Mock;
+  };
+  upsert: jest.MockedFn<DelegateByModel<M>["upsert"]> & {
+    query: jest.Mock;
+  };
+  groupBy: jest.MockedFn<DelegateByModel<M>["groupBy"]> & {
+    query: jest.Mock;
+  };
+  count: jest.MockedFn<DelegateByModel<M>["count"]> & {
+    query: jest.Mock;
+  };
 };
 
 function initModel(callbacks: Partial<{ [key in Operation]: jest.Mock }> = {}) {
   return operations.reduce<any>((acc, operation) => {
-    acc[operation] = callbacks[operation] || jest.fn(() => null);
+    acc[operation] = jest.fn(callbacks[operation] || (() => null));
+    acc[operation].query = jest.fn();
     return acc;
   }, {});
 }
@@ -62,15 +93,7 @@ export class MockClient {
   profile: MockOperations<"Profile">;
   post: MockOperations<"Post">;
   comment: MockOperations<"Comment">;
-
-  ext: {
-    model: {
-      user?: MockOperations<"User">;
-      profile?: MockOperations<"Profile">;
-      post?: MockOperations<"Post">;
-      comment?: MockOperations<"Comment">;
-    };
-  };
+  extendedClients: Array<MockClient> = [];
 
   constructor(
     callbacks: Partial<
@@ -81,14 +104,6 @@ export class MockClient {
     this.profile = initModel(callbacks.profile);
     this.post = initModel(callbacks.post);
     this.comment = initModel(callbacks.comment);
-    this.ext = {
-      model: {
-        user: initModel(),
-        profile: initModel(),
-        post: initModel(),
-        comment: initModel(),
-      },
-    };
   }
 
   $extends(extension: any) {
@@ -99,35 +114,25 @@ export class MockClient {
 
     const newClient = new MockClient();
 
-    Object.keys(ext.model || {}).forEach((model) => {
-      const modelName = model as keyof MockClient["ext"]["model"];
-      if (!models.includes(modelName)) {
-        throw new Error(`Invalid model name in mock client ${modelName}`);
-      }
+    models.forEach((model) => {
+      operations.forEach((operation) => {
+        const query = jest.fn((_) => null);
 
-      newClient.ext.model[modelName] = Object.keys(ext.model[modelName]).reduce<
-        any
-      >((acc, operation) => {
-        acc[operation] = jest.fn(ext.model[modelName][operation]);
-        return acc;
-      }, {});
+        // @ts-ignore
+        newClient[model][operation] = jest.fn((args) => {
+          return ext.query.$allModels.$allOperations({
+            model: model[0].toUpperCase() + model.slice(1),
+            operation,
+            args,
+            query,
+          });
+        });
 
-      Object.keys(newClient[modelName]).forEach((operation) => {
-        newClient[modelName][operation as Operation].mockImplementation(
-          // @ts-ignore
-          (args) => {
-            const hook = newClient.ext.model[modelName as Model]?.[
-              operation as Operation
-            ];
-
-            if (!hook)
-              throw new Error(`No hook found for ${model}.${operation}`);
-
-            return hook(args as any);
-          }
-        );
+        newClient[model][operation].query = query;
       });
     });
+
+    this.extendedClients.push(newClient);
 
     return newClient;
   }
@@ -136,14 +141,11 @@ export class MockClient {
     operations.forEach((operation) => {
       models.forEach((model) => {
         this[model as Model][operation as Operation].mockReset();
+        this[model as Model][operation as Operation].query.mockReset();
       });
     });
-    models.forEach((model) => {
-      if (this.ext.model[model as keyof MockClient["ext"]["model"]]) {
-        operations.forEach((operation) => {
-          this.ext.model[model as Model]?.[operation as Operation].mockReset();
-        });
-      }
+    this.extendedClients.forEach((client) => {
+      client.reset();
     });
   }
 }

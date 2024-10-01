@@ -22,7 +22,7 @@ describe("where", () => {
     });
 
     // params have not been modified
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: {
         email: expect.any(String),
         comments: {
@@ -65,7 +65,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: {
         email: expect.any(String),
         comments: {
@@ -127,7 +127,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.comment.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.comment.findMany.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
         content: expect.any(String),
@@ -197,7 +197,7 @@ describe("where", () => {
     });
 
     // params have been modified
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: {
         email: expect.any(String),
         comments: {
@@ -277,7 +277,7 @@ describe("where", () => {
     });
 
     // params have been modified
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: {
         email: expect.any(String),
         comments: {
@@ -362,7 +362,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: {
         email: expect.any(String),
         comments: {
@@ -430,7 +430,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       include: {
         posts: {
           where: {
@@ -470,7 +470,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       select: {
         posts: {
           where: {
@@ -514,7 +514,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       include: {
         comments: {
           where: {
@@ -563,7 +563,7 @@ describe("where", () => {
       },
     });
 
-    expect(client.user.findMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.findMany.query).toHaveBeenCalledWith({
       select: {
         comments: {
           where: {

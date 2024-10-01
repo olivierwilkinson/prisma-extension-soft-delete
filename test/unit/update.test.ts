@@ -14,7 +14,7 @@ describe("update", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
     });
@@ -26,7 +26,7 @@ describe("update", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.update.mockImplementation(
+    extendedClient.user.update.query.mockImplementation(
       () => Promise.resolve({ id: 1, name: "John" }) as any
     );
     const result = await extendedClient.user.update({
@@ -86,7 +86,7 @@ describe("update", () => {
     });
 
     // params have not been modified
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         author: {
@@ -123,7 +123,7 @@ describe("update", () => {
     });
 
     // params have not been modified
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         comments: {
@@ -150,7 +150,7 @@ describe("update", () => {
     await extendedClient.user.update(undefined);
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith(undefined);
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith(undefined);
   });
 
   it("does not modify update when no where is passed", async () => {
@@ -163,6 +163,6 @@ describe("update", () => {
     await extendedClient.user.update({});
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({});
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({});
   });
 });

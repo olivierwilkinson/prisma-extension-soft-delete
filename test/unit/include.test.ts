@@ -17,7 +17,7 @@ describe("include", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: { comments: true },
@@ -41,7 +41,7 @@ describe("include", () => {
     });
 
     // params have been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: {
@@ -75,7 +75,7 @@ describe("include", () => {
     });
 
     // params have been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: {
@@ -97,7 +97,7 @@ describe("include", () => {
       })
     );
 
-    client.post.update.mockImplementation(
+    extendedClient.post.update.query.mockImplementation(
       () => Promise.resolve({ author: { deleted: true } }) as any
     );
 
@@ -109,7 +109,7 @@ describe("include", () => {
       },
     });
 
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { content: "foo" },
       include: {
@@ -127,7 +127,7 @@ describe("include", () => {
       })
     );
 
-    client.post.update.mockImplementation(
+    extendedClient.post.update.query.mockImplementation(
       () => Promise.resolve({ author: { deleted: false } }) as any
     );
     const result = await extendedClient.post.update({
@@ -138,7 +138,7 @@ describe("include", () => {
       },
     });
 
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { content: "foo" },
       include: {
@@ -156,7 +156,7 @@ describe("include", () => {
       })
     );
 
-    client.post.update.mockImplementation(
+    extendedClient.post.update.query.mockImplementation(
       () => Promise.resolve({ author: { deleted: true, comments: [] } }) as any
     );
 
@@ -172,7 +172,7 @@ describe("include", () => {
       },
     });
 
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { content: "foo" },
       include: {
@@ -194,7 +194,7 @@ describe("include", () => {
       })
     );
 
-    client.post.update.mockImplementation(
+    extendedClient.post.update.query.mockImplementation(
       () =>
         Promise.resolve({
           author: {
@@ -232,7 +232,7 @@ describe("include", () => {
       })
     );
 
-    client.user.findFirst.mockImplementation(
+    extendedClient.user.findFirst.query.mockImplementation(
       () =>
         Promise.resolve({
           posts: [
@@ -260,7 +260,7 @@ describe("include", () => {
       },
     });
 
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: { id: 1 },
       include: {
         posts: {
@@ -290,7 +290,7 @@ describe("include", () => {
       })
     );
 
-    client.user.findFirst.mockImplementation(
+    extendedClient.user.findFirst.query.mockImplementation(
       () =>
         Promise.resolve({
           posts: [
@@ -312,7 +312,7 @@ describe("include", () => {
       },
     });
 
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: { id: 1, deleted: false },
       include: {
         posts: {
@@ -339,7 +339,7 @@ describe("include", () => {
       })
     );
 
-    client.user.update.mockImplementation(
+    extendedClient.user.update.query.mockImplementation(
       () =>
         Promise.resolve({
           comments: [{ deleted: true }, { deleted: true }],
@@ -358,7 +358,7 @@ describe("include", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { email: "test@test.com" },
       include: {

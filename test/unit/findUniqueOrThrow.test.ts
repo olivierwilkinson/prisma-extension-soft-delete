@@ -13,7 +13,7 @@ describe("findUniqueOrThrow", () => {
     });
 
     // params have not been modified
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -55,7 +55,7 @@ describe("findUniqueOrThrow", () => {
         deleted: false,
       },
     });
-    expect(client.user.findUniqueOrThrow).not.toHaveBeenCalled();
+    expect(extendedClient.user.findUniqueOrThrow.query).not.toHaveBeenCalled();
   });
 
   it("does not modify findUniqueOrThrow to be a findFirstOrThrow when no args passed", async () => {
@@ -70,7 +70,7 @@ describe("findUniqueOrThrow", () => {
     await extendedClient.user.findUniqueOrThrow(undefined);
 
     // params have not been modified
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith(undefined);
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith(undefined);
   });
 
   it("does not modify findUniqueOrThrow to be a findFirst when invalid where passed", async () => {
@@ -83,18 +83,18 @@ describe("findUniqueOrThrow", () => {
 
     // @ts-expect-error testing if user doesn't pass where accidentally
     await extendedClient.user.findUniqueOrThrow({});
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({});
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({});
     client.user.findUniqueOrThrow.mockClear();
 
     // expect empty where not to modify params
     // @ts-expect-error testing if user passes where without unique field
     await extendedClient.user.findUniqueOrThrow({ where: {} });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({ where: {} });
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({ where: {} });
     client.user.findUniqueOrThrow.mockClear();
 
     // expect where with undefined id field not to modify params
     await extendedClient.user.findUniqueOrThrow({ where: { id: undefined } });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { id: undefined },
     });
     client.user.findUniqueOrThrow.mockClear();
@@ -103,7 +103,7 @@ describe("findUniqueOrThrow", () => {
     await extendedClient.user.findUniqueOrThrow({
       where: { email: undefined },
     });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { email: undefined },
     });
     client.user.findUniqueOrThrow.mockClear();
@@ -112,7 +112,7 @@ describe("findUniqueOrThrow", () => {
     await extendedClient.user.findUniqueOrThrow({
       where: { name_email: undefined },
     });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { name_email: undefined },
     });
     client.user.findUniqueOrThrow.mockClear();
@@ -120,7 +120,7 @@ describe("findUniqueOrThrow", () => {
     // expect where with defined non-unique field
     // @ts-expect-error intentionally incorrect where
     await extendedClient.user.findUniqueOrThrow({ where: { name: "test" } });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { name: "test" },
     });
     client.user.findUniqueOrThrow.mockClear();
@@ -129,7 +129,7 @@ describe("findUniqueOrThrow", () => {
     await extendedClient.user.findUniqueOrThrow({
       where: { id: undefined, name: "test" },
     });
-    expect(client.user.findUniqueOrThrow).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUniqueOrThrow.query).toHaveBeenCalledWith({
       where: { id: undefined, name: "test" },
     });
   });

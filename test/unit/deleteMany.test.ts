@@ -13,7 +13,7 @@ describe("deleteMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.deleteMany).toHaveBeenCalledWith({
+    expect(extendedClient.user.deleteMany.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -36,7 +36,7 @@ describe("deleteMany", () => {
     });
 
     // params have not been modified
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {
@@ -138,7 +138,7 @@ describe("deleteMany", () => {
     });
 
     // params are modified correctly
-    expect(client.user.update).toHaveBeenCalledWith({
+    expect(extendedClient.user.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         posts: {

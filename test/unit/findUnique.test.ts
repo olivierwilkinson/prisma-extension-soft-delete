@@ -13,7 +13,7 @@ describe("findUnique", () => {
     });
 
     // params have not been modified
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -55,7 +55,7 @@ describe("findUnique", () => {
         deleted: false,
       },
     });
-    expect(client.user.findUnique).not.toHaveBeenCalled();
+    expect(extendedClient.user.findUnique.query).not.toHaveBeenCalled();
   });
 
   it("throws when trying to pass a findUnique where with a compound unique index field", async () => {
@@ -104,7 +104,7 @@ describe("findUnique", () => {
     });
 
     // params have not been modified
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: {
         name_email: {
           name: "test",
@@ -127,7 +127,7 @@ describe("findUnique", () => {
     await extendedClient.user.findUnique(undefined);
 
     // params have not been modified
-    expect(client.user.findUnique).toHaveBeenCalledWith(undefined);
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith(undefined);
     expect(client.user.findFirst).not.toHaveBeenCalled();
   });
 
@@ -141,32 +141,32 @@ describe("findUnique", () => {
 
     // @ts-expect-error testing if user doesn't pass where accidentally
     await extendedClient.user.findUnique({});
-    expect(client.user.findUnique).toHaveBeenCalledWith({});
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({});
     client.user.findUnique.mockClear();
 
     // expect empty where not to modify params
     // @ts-expect-error testing if user passes where without unique field
     await extendedClient.user.findUnique({ where: {} });
-    expect(client.user.findUnique).toHaveBeenCalledWith({ where: {} });
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({ where: {} });
     client.user.findUnique.mockClear();
 
     // expect where with undefined id field not to modify params
     await extendedClient.user.findUnique({ where: { id: undefined } });
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { id: undefined },
     });
     client.user.findUnique.mockClear();
 
     // expect where with undefined unique field not to modify params
     await extendedClient.user.findUnique({ where: { email: undefined } });
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { email: undefined },
     });
     client.user.findUnique.mockClear();
 
     // expect where with undefined unique index field not to modify params
     await extendedClient.user.findUnique({ where: { name_email: undefined } });
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { name_email: undefined },
     });
     client.user.findUnique.mockClear();
@@ -174,7 +174,7 @@ describe("findUnique", () => {
     // expect where with defined non-unique field
     // @ts-expect-error intentionally incorrect where
     await extendedClient.user.findUnique({ where: { name: "test" } });
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { name: "test" },
     });
     client.user.findUnique.mockClear();
@@ -183,7 +183,7 @@ describe("findUnique", () => {
     await extendedClient.user.findUnique({
       where: { id: undefined, name: "test" },
     });
-    expect(client.user.findUnique).toHaveBeenCalledWith({
+    expect(extendedClient.user.findUnique.query).toHaveBeenCalledWith({
       where: { id: undefined, name: "test" },
     });
   });

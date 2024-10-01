@@ -16,7 +16,7 @@ describe("groupBy", () => {
     });
 
     // params have not been modified
-    expect(client.user.groupBy).toHaveBeenCalledWith({
+    expect(extendedClient.user.groupBy.query).toHaveBeenCalledWith({
       where: { id: 1 },
       by: ["id"],
       orderBy: {},
@@ -29,7 +29,7 @@ describe("groupBy", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.groupBy.mockImplementation(
+    extendedClient.user.groupBy.query.mockImplementation(
       () => Promise.resolve([{ id: 1, deleted: true }]) as any
     );
 
@@ -57,7 +57,7 @@ describe("groupBy", () => {
     });
 
     // params have been modified
-    expect(client.user.groupBy).toHaveBeenCalledWith({
+    expect(extendedClient.user.groupBy.query).toHaveBeenCalledWith({
       by: ["id"],
       orderBy: {},
       where: {
@@ -82,7 +82,7 @@ describe("groupBy", () => {
     });
 
     // params have not been modified
-    expect(client.user.groupBy).toHaveBeenCalledWith({
+    expect(extendedClient.user.groupBy.query).toHaveBeenCalledWith({
       by: ["id"],
       orderBy: {},
       where: {

@@ -13,7 +13,7 @@ describe("findFirst", () => {
     });
 
     // params have not been modified
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: { id: 1 },
     });
   });
@@ -24,7 +24,7 @@ describe("findFirst", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.findFirst.mockImplementation((() =>
+    extendedClient.user.findFirst.query.mockImplementation((() =>
       Promise.resolve({
         id: 1,
         deleted: true,
@@ -50,7 +50,7 @@ describe("findFirst", () => {
     });
 
     // params have been modified
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: false,
@@ -67,7 +67,7 @@ describe("findFirst", () => {
     await extendedClient.user.findFirst(undefined);
 
     // params have been modified
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -83,7 +83,7 @@ describe("findFirst", () => {
     await extendedClient.user.findFirst({});
 
     // params have been modified
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: {
         deleted: false,
       },
@@ -103,7 +103,7 @@ describe("findFirst", () => {
     });
 
     // params have not been modified
-    expect(client.user.findFirst).toHaveBeenCalledWith({
+    expect(extendedClient.user.findFirst.query).toHaveBeenCalledWith({
       where: {
         id: 1,
         deleted: true,

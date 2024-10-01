@@ -8,7 +8,7 @@ describe("upsert", () => {
       createSoftDeleteExtension({ models: { User: true } })
     );
 
-    client.user.upsert.mockImplementation(
+    extendedClient.user.upsert.query.mockImplementation(
       () =>
         Promise.resolve({ id: 1, name: "John", email: "John@test.com" }) as any
     );
@@ -39,7 +39,7 @@ describe("upsert", () => {
       update: { name: "John" },
     });
 
-    expect(client.user.upsert).toHaveBeenCalledWith({
+    expect(extendedClient.user.upsert.query).toHaveBeenCalledWith({
       where: { id: 1 },
       create: { name: "John", email: "john@test.com" },
       update: { name: "John" },
@@ -67,7 +67,7 @@ describe("upsert", () => {
       },
     });
 
-    expect(client.post.update).toHaveBeenCalledWith({
+    expect(extendedClient.post.update.query).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         comments: {

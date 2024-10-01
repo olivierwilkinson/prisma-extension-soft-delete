@@ -11,7 +11,7 @@ describe("count", () => {
     await extendedClient.user.count({});
 
     // params have not been modified
-    expect(client.user.count).toHaveBeenCalledWith({});
+    expect(extendedClient.user.count.query).toHaveBeenCalledWith({});
   });
 
   it("excludes deleted records from count", async () => {
@@ -25,7 +25,7 @@ describe("count", () => {
     await extendedClient.user.count(undefined);
 
     // params have been modified
-    expect(client.user.count).toHaveBeenCalledWith({ where: { deleted: false } });
+    expect(extendedClient.user.count.query).toHaveBeenCalledWith({ where: { deleted: false } });
   });
 
   it("excludes deleted records from count with empty args", async () => {
@@ -39,7 +39,7 @@ describe("count", () => {
     await extendedClient.user.count({});
 
     // params have been modified
-    expect(client.user.count).toHaveBeenCalledWith({
+    expect(extendedClient.user.count.query).toHaveBeenCalledWith({
       where: { deleted: false },
     });
   });
@@ -57,7 +57,7 @@ describe("count", () => {
     });
 
     // params have been modified
-    expect(client.user.count).toHaveBeenCalledWith({
+    expect(extendedClient.user.count.query).toHaveBeenCalledWith({
       where: { email: { contains: "test" }, deleted: false },
     });
   });
