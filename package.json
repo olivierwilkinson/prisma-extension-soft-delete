@@ -9,6 +9,7 @@
     "build": "npm-run-all build:cjs build:esm",
     "build:cjs": "tsc -p tsconfig.build.json",
     "build:esm": "tsc -p tsconfig.esm.json",
+    "prepare": "npm run build",
     "test:unit": "prisma generate && jest --config jest.config.unit.js",
     "test:e2e": "./test/scripts/run-with-postgres.sh jest --config jest.config.e2e.js --runInBand",
     "test": "./test/scripts/run-with-postgres.sh jest --runInBand",
